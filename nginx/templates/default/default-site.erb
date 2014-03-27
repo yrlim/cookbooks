@@ -1,0 +1,43 @@
+server {
+  listen   80;
+  server_name  <%= node['hostname'] %>;
+
+  root /var/www/wordpress;
+  index index.php index.htm index.html;
+
+  access_log  <%= node['nginx']['log_dir'] %>/localhost.access.log;
+
+        location ~* \.(jpg|jpeg|svg|gif|png|css|js|ico|xml)$ {
+            access_log        off;
+            log_not_found     off;
+            expires           30d;
+        }
+        location / {
+            try_files $uri $uri/ /index.php?q=$uri&$args;
+        }
+        error_page  404              /404.html;
+        location = /404.html {
+            root   /usr/share/nginx/html;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+        location /uploaddir {
+            location ~ \.php$ {return 403;}
+        }
+          location ~ /\. {
+               access_log off;
+               log_not_found off;
+               deny all;
+          }
+         
+        location ~* \.php$ {
+            location ~ \..*/.*\.php$ {return 404;}
+            fastcgi_index  index.php;
+            fastcgi_pass   unix:/var/run/php-fpm-www.sock;
+            include        fastcgi_params;
+            fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+            fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
+        }
+}
